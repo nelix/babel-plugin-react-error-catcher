@@ -1,5 +1,5 @@
 # babel-plugin-react-error-catcher
-Automatically adds a decorator as a higher-order component to React components.  If there's an error, it will catch it and internally revert the broken component(s) back to the last working version while displaying the error within an overlay.  (Although currently it just displays the error. ;)
+Automatically adds a decorator as a higher-order component to React components.  If there's an error, it will catch it and display it within an overlay.  And if the error originated from a hot reload, it will revert the broken component(s) back to the last working code beneath the overlay.  (Although currently it just displays the error. ;)
 
 ## Installation
 ```
