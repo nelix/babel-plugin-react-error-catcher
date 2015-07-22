@@ -22,5 +22,7 @@ This is currently used within [`web-tedit`](https://github.com/loggur/web-tedit)
 ## Temporary Disclaimer
 This plugin is just a few hours old at the time of this writing, so I've only had a chance to test it with [`jspm`](https://github.com/jspm/jspm-cli)/[`systemjs`](https://github.com/systemjs/systemjs) so far, but it should work (in theory) with [`webpack`](https://github.com/webpack/webpack) and the right configuration.  When I get a chance, I'll add a couple of detailed examples for both [`jspm`](https://github.com/jspm/jspm-cli)/[`systemjs`](https://github.com/systemjs/systemjs) and [`webpack`](https://github.com/webpack/webpack) that make use of the hot reloading and error catcher.  :)
 
+I expect this plugin to evolve quite a bit so please don't hesitate to break it, submit issues and pull requests, and/or request features!
+
 ## License
 MIT
