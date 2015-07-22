@@ -1,10 +1,10 @@
 export const DEFAULT_STYLE = {
-  display     : "inline-block",
-  color       : "#ffffff",
-  background  : "#aa0000",
-  whiteSpace  : "pre-wrap",
-  wordSpacing : "normal",
-  wordBreak   : "normal"
+  display     : 'inline-block',
+  color       : '#ffffff',
+  background  : '#aa0000',
+  whiteSpace  : 'pre-wrap',
+  wordSpacing : 'normal',
+  wordBreak   : 'normal'
 };
 
 const COPY_STYLES = [
@@ -76,7 +76,7 @@ export default function ErrorCatcher (
         style[key] = defaultStyle[key];
       }
 
-      for (let index in COPY_STYLES) {
+      for (let index of COPY_STYLES) {
         let key = COPY_STYLES[index];
 
         if (elementStyle[key]) {
