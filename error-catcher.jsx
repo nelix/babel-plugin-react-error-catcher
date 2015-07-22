@@ -1,9 +1,9 @@
 export const style = {
-  color: "#ffffff",
-  background: "#aa0000",
-  whiteSpace: "pre-wrap",
-  word-spacing: "normal",
-  word-break: "normal"
+  color       : "#ffffff",
+  background  : "#aa0000",
+  whiteSpace  : "pre-wrap",
+  wordSpacing : "normal",
+  wordBreak   : "normal"
 };
 
 /**
