@@ -6,7 +6,7 @@ var System = global && global.System;
 var pluginPath = 'babel-plugin-react-error-catcher';
 
 var catcherName = 'ErrorCatcher';
-var catcherPath = (System && __dirname || pluginPath)+'/error-catcher.jsx';
+var catcherPath = (System && __dirname || pluginPath)+'/error-catcher.js';
 
 var reactName = 'React';
 var reactPath = 'react';
