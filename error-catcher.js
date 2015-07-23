@@ -1,4 +1,6 @@
-export const DEFAULT_STYLE = {
+'use strict';
+
+var DEFAULT_STYLE = {
   display     : 'inline-block',
   color       : '#ffffff',
   background  : '#aa0000',
@@ -7,156 +9,126 @@ export const DEFAULT_STYLE = {
   wordBreak   : 'normal'
 };
 
-const COPY_STYLES = [
-  'display',
-  'position',
-  'top',
-  'bottom',
-  'left',
-  'right',
-  'margin',
-  'marginTop',
-  'marginBottom',
-  'marginLeft',
-  'marginRight'
-];
-
-const SAFE_RESULTS = {
+var SAFE_RESULTS = {
   getInitialState: {},
   shouldComponentUpdate: true
 };
 
-const COUNTS = {};
-function count (displayName) {
-  if (!COUNTS[displayName]) {
-    COUNTS[displayName] = 0;
-  }
-
-  return COUNTS[displayName]++;
-}
+var RENDERED_KEYS = {
+  componentDidMount: true,
+  componentDidUpdate: true
+};
 
 /**
- * Returns a higher-order component that catches and displays errors.
+ * Overloads some component's methods to catch errors and pass them to the 
+ * report function.  The report function may return a ReactElement or 
+ * ReactComponent to be rendered in the event of an error.
  *
  * @param {Object} React
  * @param {String} filename
  * @param {String} displayName
- * @param {Object} defaultStyle Optional
+ * @param {ReactComponent|Function} reporter
  * @return {Function}
  * @api public
  */
-export default function ErrorCatcher (
-  React,
-  filename,
-  displayName,
-  defaultStyle = DEFAULT_STYLE
-) {
-  return (Component) => class extends React.Component {
-    static displayName = displayName+'ErrorCatcher'+count(displayName);
+module.exports = errorCatcher;
+function errorCatcher (React, filename, displayName, reporter) {
+  var report;
 
-    componentDidMount() {
-      this.rememberStyle();
+  if (reporter.prototype && typeof reporter.prototype.render === 'function') {
+    report = function (error, instance, filename, displayName) {
+      return React.createElement(reporter, {
+        error: error,
+        instance: instance,
+        filename: filename,
+        displayName: displayName
+      });
+    };
+  } else {
+    report = reporter;
+  }
+
+  return function patch (Component) {
+    var proto = Component.prototype;
+    var keys = Object.getOwnPropertyNames(proto);
+    var nextRender = null;
+
+    if (Component._patchedToCatch) {
+      return Component;
     }
+    Component._patchedToCatch = true;
 
-    componentDidUpdate() {
-      this.rememberStyle();
-    }
+    keys.forEach(function (key) {
+      var method = proto[key];
 
-    rememberStyle() {
-      const element = React.findDOMNode(this);
-      const elementStyle = element && element.style;
-      const elementClass = element && element.getAttribute('class');
-      const style = {};
-
-      if (this.state.err) {
+      if (typeof method !== 'function') {
         return;
       }
 
-      for (let key in defaultStyle) {
-        style[key] = defaultStyle[key];
-      }
+      function getResult () {
+        var result;
 
-      for (let index of COPY_STYLES) {
-        let key = COPY_STYLES[index];
+        try {
+          result = method.apply(this, arguments);
+        } catch (error) {
+          nextRender = report(error, this, filename, displayName);
 
-        if (elementStyle[key]) {
-          style[key] = elementStyle[key];
+          if (nextRender) {
+            setTimeout(function () {
+              this.forceUpdate();
+            }.bind(this));
+          }
+          
+          if (SAFE_RESULTS[key]) {
+            result = SAFE_RESULTS[key];
+          }
         }
+
+        return result;
       }
 
-      if (style.display === 'none') {
-        style.display = 'inline-block';
+      if (key === 'render') {
+        proto[key] = function () {
+          var result = nextRender;  // render reporter's message if truthy
+          nextRender = null;        // and then forget it
+
+          return result
+            || getResult.apply(this, arguments)
+            || renderDefault(React, displayName);
+        };
+      } else if (report.rendered && RENDERED_KEYS[key]) {
+        proto[key] = function () {
+          report.rendered(this, filename, displayName);
+          return getResult.apply(this, arguments);
+        };
+      } else {
+        proto[key] = getResult;
       }
-
-      style.width  = element.offsetWidth;
-      style.height = element.offsetHeight;
-
-      // don't re-render, just remember for next error
-      this.state.style     = style;
-      this.state.className = elementClass;
-    }
-
-    patch() {
-      const self  = this;
-      const proto = Component.prototype;
-      const keys  = Object.getOwnPropertyNames(proto);
-
-      for (let key of keys) {
-        let value = proto[key];
-
-        if (typeof value === 'function') {
+    });
+    
+    // ensure the reporter knows when the component has mounted/updated
+    if (report.rendered) {
+      for (var key in RENDERED_KEYS) {
+        if (!proto[key]) {
           proto[key] = function () {
-            let result;
-
-            if (self.state.err && key === 'render') {
-              result = (
-                <div
-                  {...self.state.lastProps}   // attempt to maintain events
-                  className={self.state.className}
-                  style={self.state.style}
-                >
-                  {self.state.err.toString()}
-                </div>
-              );
-
-              delete self.state.err;
-            } else {
-              try {
-                result = value.apply(this, arguments);
-
-                if (key === 'render') {
-                  self.state.lastProps = result && result.props;
-                }
-              } catch (err) {
-                if (SAFE_RESULTS[key]) {
-                  result = SAFE_RESULTS[key];
-                } else if (key === 'render') {
-                  result = <div>{displayName}</div>;
-                }
-
-                setTimeout(() => {
-                  self.setState({err: err});
-                });
-              }
-            }
-
-            return result;
-          };
+            report.rendered(this, filename, displayName);
+          }
         }
       }
     }
 
-    render() {
-      // for some reason `constructor` isn't getting called after hot reload
-      // despite this HOC being completely new every time, so let's use this
-      // hack until we can figure out why -_-
-      if (!Component._patchedToCatch) {
-        Component._patchedToCatch = true;
-        this.state = {style: defaultStyle};
-        this.patch();
-      }
-
-      return <Component {...this.props} />;
-    }
+    return Component;
   }
+}
+
+/**
+ * Creates a ReactElement containing the `displayName`.
+ *
+ * @param {Object} React
+ * @param {String} displayName
+ * @return {ReactElement}
+ * @api private
+ */
+function renderDefault (React, displayName) {
+  return React.createElement('div', {style: DEFAULT_STYLE}, displayName);
 }

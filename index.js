@@ -1,12 +1,11 @@
-if (typeof global === 'undefined' && typeof window !== 'undefined') {
-  global = window;
-}
+'use strict';
 
-var System = global && global.System;
-var pluginPath = 'babel-plugin-react-error-catcher';
+var pluginName = 'babel-plugin-react-error-catcher';
+var pluginPath = typeof __dirname === 'undefined' ? pluginName : __dirname;
 
-var catcherName = 'ErrorCatcher';
-var catcherPath = (System && __dirname || pluginPath)+'/error-catcher.js';
+var catcherName = 'errorCatcher';
+var catcherPath = pluginPath+'/error-catcher.js';
+var reporterName = 'errorReporter';
 
 var reactName = 'React';
 var reactPath = 'react';
@@ -16,63 +15,88 @@ function isRenderMethod (member) {
          member.key.name === 'render';
 }
 
-exports = module.exports = transform;
-function transform (babel) {
-  var t = babel.types;
+/**
+ * Returns a plugin for Babel that catches and reports errors.  To display a
+ * message in the event of an error, pass the path of a reporter module to be 
+ * imported, which can be either of the following:
+ *
+ *   a) ReactComponent that might use the props below to render a message
+ *   b) function that accepts the props below as arguments; it may also return
+ *      a ReactComponent or ReactElement to be rendered
+ *
+ * Props:
+ *   - error
+ *   - instance
+ *   - filename
+ *   - displayName
+ *
+ * @param {String} reporterPath
+ * @return {Function}
+ * @api public
+ */
+module.exports = createErrorCatcher;
+function createErrorCatcher (reporterPath) {
+  return function transform (babel) {
+    var t = babel.types;
 
-  return new babel.Transformer(pluginPath, {
-    /**
-     * ES6 ReactComponent
-     */
-    ClassDeclaration: function (node, parent, scope, file) {
-      var hasRenderMethod = node.body.body.filter(isRenderMethod).length > 0;
-      if (!hasRenderMethod) {
-        return;
-      }
+    return new babel.Transformer(pluginName, {
+      /**
+       * ES6 ReactComponent
+       */
+      ClassDeclaration: function (node, parent, scope, file) {
+        var hasRenderMethod = node.body.body.filter(isRenderMethod).length > 0;
+        if (!hasRenderMethod) {
+          return;
+        }
 
-      var ErrorCatcher  = file.addImport(catcherPath, catcherName);
-      var React         = file.addImport(reactPath,   reactName);
+        var React         = file.addImport(reactPath,    reactName);
+        var errorCatcher  = file.addImport(catcherPath,  catcherName);
+        var reporter      = file.addImport(reporterPath, reporterName);
 
-      node.decorators = node.decorators || [];
-      node.decorators.push(
-        t.decorator(
+        node.decorators = node.decorators || [];
+        node.decorators.push(
+          t.decorator(
+            t.callExpression(
+              errorCatcher,
+              [
+                React,
+                t.literal(file.opts._address || file.opts.filename),
+                t.literal(node.id && node.id.name || ''),
+                reporter
+              ]
+            )
+          )
+        );
+      },
+
+      /**
+       * ReactClassComponent
+       */
+      CallExpression: function (node, parent, scope, file) {
+        var callee = this.get('callee');
+        if (node._catchErrors || !callee.matchesPattern('React.createClass')) {
+          return;
+        }
+        
+        var React         = file.addImport(reactPath,    reactName);
+        var errorCatcher  = file.addImport(catcherPath,  catcherName);
+        var reporter      = file.addImport(reporterPath, reporterName);
+        
+        node._catchErrors = true;
+
+        return t.callExpression(
           t.callExpression(
-            ErrorCatcher,
+            errorCatcher,
             [
               React,
               t.literal(file.opts._address || file.opts.filename),
-              t.literal(node.id.name)
+              t.literal(node.id && node.id.name || ''),
+              reporter
             ]
-          )
-        )
-      );
-    },
-
-    /**
-     * ReactClassComponent
-     */
-    CallExpression: function (node, parent, scope, file) {
-      var callee = this.get('callee');
-      if (node._errDecorated || !callee.matchesPattern('React.createClass')) {
-        return;
+          ),
+          [node]
+        );
       }
-      
-      var ErrorCatcher  = file.addImport(catcherPath, catcherName);
-      var React         = file.addImport(reactPath,   reactName);
-      
-      node._errDecorated = true;
-
-      return t.callExpression(
-        t.callExpression(
-          ErrorCatcher,
-          [
-            React,
-            t.literal(file.opts._address || file.opts.filename),
-            t.literal(node && node.id && node.id.name || '')
-          ]
-        ),
-        [node]
-      );
-    }
-  });
+    });
+  }
 }
