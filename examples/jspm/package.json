@@ -1,0 +1,34 @@
+{
+  "name": "babel-plugin-react-error-catcher-example-jspm",
+  "version": "1.0.0",
+  "description": "JSPM example.",
+  "main": "client/main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server/app.js"
+  },
+  "author": "timbur",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.13.1"
+  },
+  "devDependencies": {
+    "jspm": "^0.16.0-beta.3"
+  },
+  "jspm": {
+    "directories": {
+      "baseURL": "client"
+    },
+    "dependencies": {
+      "babel-plugin-react-error-catcher": "github:loggur/babel-plugin-react-error-catcher@master",
+      "babel-plugin-react-hot": "github:loggur/babel-plugin-react-hot@^1.0.0",
+      "fetch": "github:github/fetch@^0.9.0",
+      "react": "npm:react@^0.13.3"
+    },
+    "devDependencies": {
+      "babel": "npm:babel-core@^5.6.4",
+      "babel-runtime": "npm:babel-runtime@^5.6.4",
+      "core-js": "npm:core-js@^0.9.17"
+    }
+  }
+}
