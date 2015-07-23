@@ -1,5 +1,7 @@
 # babel-plugin-react-error-catcher
 
+> Feel free to try to break this, submit issues and pull requests, and/or request features!
+
 Automatically adds a decorator to React components.  Accepts a single argument, a path to some module for error reporting, and if there's an error, it will catch it and pass it to the reporter.  The reporter can be either of the following:
 
   * ReactComponent that may use the props below to render a message
@@ -29,21 +31,97 @@ npm install babel-plugin-react-error-catcher
 ```
 
 
-## Usage
+## Brief API Overview
 
-Simply add the module with the reporter's path to either `.babelrc` or `options.plugins` for `babel.transform`.  See [Babel's plugin docs](https://babeljs.io/docs/advanced/plugins/).
+There's not much to it, really.  All you do is provide the plugin to Babel with the path to a reporter module.  Use whatever reporter you want, or try out one of the three included:
+
+1. [Function that log errors to console](https://github.com/loggur/babel-plugin-react-error-catcher/blob/master/reporters/console.js)
+
+2. [Component that displays the error string with white text on a red background](https://github.com/loggur/babel-plugin-react-error-catcher/blob/master/reporters/basic-reporter.js)
+
+3. [Function that uses the component from #2 but ensures it's the same size as the originating component](https://github.com/loggur/babel-plugin-react-error-catcher/blob/master/reporters/same-size-reporter.js)
+
+
+**Note:**  The reporter may also export a `rendered` function that you can use to obtain information about components as soon as they've successfully rendered.  See [`same-size-reporter`](https://github.com/loggur/babel-plugin-react-error-catcher/blob/master/reporters/same-size-reporter.js#L41-L72) for an example.
+
+
+## JSPM Example ([Quick Link](https://github.com/loggur/babel-plugin-react-error-catcher/blob/master/examples/jspm))
+
+From [`examples/jspm/client/minimal-editor.js`](https://github.com/loggur/babel-plugin-react-error-catcher/blob/master/examples/jspm/client/minimal-editor.js):
+```js
+import hotPlugin    from 'babel-plugin-react-hot';
+import errorCatcher from 'babel-plugin-react-error-catcher';
+
+const reportersDir = 'babel-plugin-react-error-catcher/reporters/';
+const reporterPath = reportersDir+'same-size-reporter';
+
+System.config({
+  "trace": true,
+  "babelOptions": {
+    "stage": 0,
+    "optional": [
+      "runtime"
+    ],
+    "plugins": [
+      hotPlugin,
+      errorCatcher(reporterPath)
+    ]
+  }
+});
+```
+
+That's it!  Try it yourself:
+
+```
+git clone git@github.com:loggur/babel-plugin-react-error-catcher.git
+cd babel-plugin-react-error-catcher/examples/jspm
+npm install
+npm run jspm-install
+npm start
+open http://localhost:8080
+```
+
+
+## WebPack Example ([Quick Link](https://github.com/loggur/babel-plugin-react-error-catcher/blob/master/examples/webpack))
+
+[`examples/webpack/.babelrc`](https://github.com/loggur/babel-plugin-react-error-catcher/blob/master/examples/webpack/.babelrc):
+```json
+{
+  "stage": 0,
+  "optional": [
+    "runtime"
+  ],
+  "plugins": [
+    "react-hot",
+    "./error-catcher"
+  ]
+}
+```
+
+[`examples/webpack/error-catcher.js`](https://github.com/loggur/babel-plugin-react-error-catcher/blob/master/examples/webpack/error-catcher.js):
+```js
+var catcherPath = 'babel-plugin-react-error-catcher';
+var reporterPath = catcherPath+'/reporters/same-size-reporter';
+
+module.exports = require(catcherPath)(reporterPath);
+```
+
+That's it!  Try it yourself:
+
+```
+git clone git@github.com:loggur/babel-plugin-react-error-catcher.git
+cd babel-plugin-react-error-catcher/examples/webpack
+npm install
+npm start
+open http://localhost:8080
+```
+
+
+## Real World Example
 
 This is currently used within [`web-tedit`](https://github.com/loggur/web-tedit) (extensive work-in-progress) and it is designed to work with React hot reloading.  See [`babel-plugin-react-hot`](https://github.com/loggur/babel-plugin-react-hot) for said Babel plugin.
-
-
-## Temporary Disclaimer
-
-I've only had a chance to test it with [`jspm`](https://github.com/jspm/jspm-cli)/[`systemjs`](https://github.com/systemjs/systemjs) so far, but it should work (in theory) with [`webpack`](https://github.com/webpack/webpack) and the right configuration.  When I get a chance, I'll add a couple of detailed examples for both [`jspm`](https://github.com/jspm/jspm-cli)/[`systemjs`](https://github.com/systemjs/systemjs) and [`webpack`](https://github.com/webpack/webpack) that make use of the hot reloading and error catcher.  :)
-
-I expect this plugin to evolve quite a bit so please don't hesitate to break it, submit issues and pull requests, and/or request features!
 
 
 ## License
 
 MIT
-
