@@ -20,9 +20,9 @@ function isRenderMethod (member) {
  * message in the event of an error, pass the path of a reporter module to be 
  * imported, which can be either of the following:
  *
- *   a) ReactComponent that might use the props below to render a message
- *   b) function that accepts the props below as arguments; it may also return
- *      a ReactComponent or ReactElement to be rendered
+ *   a) ReactComponent that may use the props below to render a message
+ *   b) function that accepts the arguments below; it may also return a
+ *      ReactComponent or ReactElement to be rendered
  *
  * Props:
  *   - error
