@@ -72,6 +72,8 @@ System.config({
 
 That's it!  Try it yourself:
 
+> **Note:**  NPM likes to timeout sometimes when downloading packages, so if this happens, just keep trying `npm install` and `npm run jspm-install` before `npm start`.
+
 ```
 git clone git@github.com:loggur/babel-plugin-react-error-catcher.git
 cd babel-plugin-react-error-catcher/examples/jspm
@@ -107,6 +109,8 @@ module.exports = require(catcherPath)(reporterPath);
 ```
 
 That's it!  Try it yourself:
+
+> **Note:**  NPM likes to timeout sometimes when downloading packages, so if this happens, just keep trying `npm install` before `npm start`.
 
 ```
 git clone git@github.com:loggur/babel-plugin-react-error-catcher.git
